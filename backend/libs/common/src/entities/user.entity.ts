@@ -25,7 +25,7 @@ export class User {
   role: Role;
 
   // Admin HRD boleh tidak terhubung ke data karyawan
-  @Column({ name: 'employee_id', nullable: true, unique: true })
+  @Column({ name: 'employee_id', type: 'int', nullable: true, unique: true })
   employeeId: number | null;
 
   @OneToOne(() => Employee, (e) => e.user, { nullable: true, onDelete: 'CASCADE' })

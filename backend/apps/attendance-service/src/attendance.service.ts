@@ -48,8 +48,9 @@ export class AttendanceService {
     );
   }
 
-  today(employeeId: number): Promise<Attendance | null> {
-    return this.attendances.findOne({ where: { employeeId, attendanceDate: localDate(new Date()) } });
+  async today(employeeId: number): Promise<{ checkedIn: boolean; attendance: Attendance | null }> {
+    const attendance = await this.attendances.findOne({ where: { employeeId, attendanceDate: localDate(new Date()) } });
+    return { checkedIn: !!attendance, attendance };
   }
 
   async findAll(q: AttendanceQuery): Promise<Paginated<Attendance>> {

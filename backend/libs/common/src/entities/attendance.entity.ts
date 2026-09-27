@@ -33,7 +33,7 @@ export class Attendance {
   @Column({ name: 'photo_path', length: 255 })
   photoPath: string;
 
-  @Column({ length: 255, nullable: true })
+  @Column({ type: 'varchar', length: 255, nullable: true })
   notes: string | null;
 
   @CreateDateColumn({ name: 'created_at' })

@@ -1,0 +1,45 @@
+{
+  "name": "dexa-wfh-backend",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "build": "nest build gateway && nest build auth-service && nest build employee-service && nest build attendance-service",
+    "start:gateway": "nest start gateway --watch",
+    "start:auth": "nest start auth-service --watch",
+    "start:employee": "nest start employee-service --watch",
+    "start:attendance": "nest start attendance-service --watch",
+    "start:all": "concurrently -n auth,employee,attendance,gateway -c blue,green,magenta,yellow \"npm:start:auth\" \"npm:start:employee\" \"npm:start:attendance\" \"npm:start:gateway\"",
+    "seed": "ts-node -r tsconfig-paths/register libs/common/src/database/seed.ts"
+  },
+  "dependencies": {
+    "@nestjs/common": "^11.0.0",
+    "@nestjs/config": "^4.0.0",
+    "@nestjs/core": "^11.0.0",
+    "@nestjs/jwt": "^11.0.0",
+    "@nestjs/microservices": "^11.0.0",
+    "@nestjs/platform-express": "^11.0.0",
+    "@nestjs/swagger": "^11.0.0",
+    "@nestjs/typeorm": "^11.0.0",
+    "bcryptjs": "^3.0.2",
+    "class-transformer": "^0.5.1",
+    "class-validator": "^0.14.1",
+    "dotenv": "^16.4.5",
+    "multer": "^2.0.0",
+    "mysql2": "^3.11.0",
+    "reflect-metadata": "^0.2.2",
+    "rxjs": "^7.8.1",
+    "typeorm": "^0.3.20"
+  },
+  "devDependencies": {
+    "@nestjs/cli": "^11.0.0",
+    "@nestjs/schematics": "^11.0.0",
+    "@types/express": "^5.0.0",
+    "@types/multer": "^1.4.12",
+    "@types/node": "^22.0.0",
+    "concurrently": "^9.0.0",
+    "ts-loader": "^9.5.1",
+    "ts-node": "^10.9.2",
+    "tsconfig-paths": "^4.2.0",
+    "typescript": "^5.6.0"
+  }
+}

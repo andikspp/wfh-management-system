@@ -3,10 +3,10 @@ import * as bcrypt from 'bcryptjs';
 import * as dotenv from 'dotenv';
 import { createConnection } from 'mysql2/promise';
 import { DataSource } from 'typeorm';
-import { Role } from '../constants';
+import { DEFAULT_WORK_SCHEDULE, Role } from '../constants';
 import { mkdirSync, writeFileSync } from 'fs';
 import { join, resolve } from 'path';
-import { Attendance, Employee, ENTITIES, User } from '../entities';
+import { Attendance, Employee, ENTITIES, User, WorkSchedule } from '../entities';
 
 dotenv.config();
 
@@ -42,6 +42,12 @@ async function main() {
   } else {
     await repo.save(repo.create({ email, passwordHash: await bcrypt.hash(password, 10), role: Role.ADMIN }));
     console.log(`Admin dibuat: ${email} / ${password}`);
+  }
+
+  const schedules = ds.getRepository(WorkSchedule);
+  if (!(await schedules.exist({ where: { id: 1 } }))) {
+    await schedules.save(schedules.create({ id: 1, ...DEFAULT_WORK_SCHEDULE }));
+    console.log(`Jam kerja default: ${DEFAULT_WORK_SCHEDULE.checkInTime} - ${DEFAULT_WORK_SCHEDULE.checkOutTime}`);
   }
 
   await seedDemo(ds);
@@ -81,10 +87,16 @@ async function seedDemo(ds: DataSource) {
         if ((day.getDate() + i) % 5 === 0) continue; // sesekali tidak absen, agar data lebih realistis
         const checkInAt = new Date(day);
         checkInAt.setHours(7 + (i % 2), 30 + ((day.getDate() * 7 + i * 11) % 30), (i * 13) % 60);
+        const checkOutAt = new Date(checkInAt);
+        checkOutAt.setHours(checkInAt.getHours() + 9, (day.getDate() * 3 + i * 17) % 60);
+        const late = minutesOfDay(checkInAt) - toMinutes(DEFAULT_WORK_SCHEDULE.checkInTime);
         attendances.push({
           employeeId: employee.id,
           attendanceDate: localDate(day),
           checkInAt,
+          checkOutAt,
+          lateMinutes: late > DEFAULT_WORK_SCHEDULE.lateToleranceMinutes ? late : 0,
+          earlyLeaveMinutes: Math.max(toMinutes(DEFAULT_WORK_SCHEDULE.checkOutTime) - minutesOfDay(checkOutAt), 0),
           photoPath,
           notes: DEMO_NOTES[(day.getDate() + i) % DEMO_NOTES.length],
         });
@@ -105,6 +117,13 @@ function lastWorkdays(count: number): Date[] {
   }
   return days;
 }
+
+const toMinutes = (time: string) => {
+  const [h, m] = time.split(':').map(Number);
+  return h * 60 + m;
+};
+
+const minutesOfDay = (d: Date) => d.getHours() * 60 + d.getMinutes();
 
 function localDate(d: Date): string {
   const pad = (n: number) => String(n).padStart(2, '0');

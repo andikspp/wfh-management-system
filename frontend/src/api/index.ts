@@ -1,5 +1,5 @@
 import { request } from './client';
-import type { Attendance, AttendanceQuery, Employee, EmployeeInput, ListQuery, Paginated, Profile } from './types';
+import type { Attendance, AttendanceQuery, Employee, EmployeeInput, ListQuery, Paginated, Profile, WorkSchedule, WorkScheduleInput } from './types';
 
 export const authApi = {
   login: (email: string, password: string) =>
@@ -24,6 +24,9 @@ export const attendanceApi = {
     if (notes) form.append('notes', notes);
     return request<Attendance>('POST', '/attendances/check-in', { body: form });
   },
+  checkOut: () => request<Attendance>('POST', '/attendances/check-out'),
+  schedule: () => request<WorkSchedule>('GET', '/attendances/schedule'),
+  updateSchedule: (body: WorkScheduleInput) => request<WorkSchedule>('PUT', '/attendances/schedule', { body }),
   today: () => request<{ checkedIn: boolean; attendance: Attendance | null }>('GET', '/attendances/today'),
   mine: (query: AttendanceQuery) => request<Paginated<Attendance>>('GET', '/attendances/me', { query: { ...query } }),
   list: (query: AttendanceQuery) => request<Paginated<Attendance>>('GET', '/attendances', { query: { ...query } }),

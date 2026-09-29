@@ -1,9 +1,10 @@
 import { useEffect, useState, type FormEvent } from 'react';
 import { attendanceApi } from '../../api';
-import type { Attendance } from '../../api/types';
+import type { Attendance, WorkSchedule } from '../../api/types';
+import { AttendanceStatus } from '../../components/AttendanceStatus';
 import { LiveClock } from '../../components/LiveClock';
 import { PhotoThumb, PhotoUpload } from '../../components/PhotoUpload';
-import { Badge, Button, Card, PageHeader, PageLoader, TextArea } from '../../components/ui';
+import { Badge, Button, Card, ConfirmDialog, PageHeader, PageLoader, TextArea } from '../../components/ui';
 import { useAuth } from '../../context/AuthContext';
 import { useToast } from '../../context/ToastContext';
 import { errorMessage, formatDate, formatTime } from '../../utils';
@@ -12,16 +13,21 @@ export function CheckInPage() {
   const { user } = useAuth();
   const notify = useToast();
   const [today, setToday] = useState<Attendance | null>(null);
+  const [schedule, setSchedule] = useState<WorkSchedule | null>(null);
   const [loading, setLoading] = useState(true);
   const [photo, setPhoto] = useState<File | null>(null);
   const [notes, setNotes] = useState('');
   const [photoError, setPhotoError] = useState('');
   const [submitting, setSubmitting] = useState(false);
+  const [confirmOut, setConfirmOut] = useState(false);
+  const [checkingOut, setCheckingOut] = useState(false);
 
   useEffect(() => {
-    attendanceApi
-      .today()
-      .then((r) => setToday(r.attendance))
+    Promise.all([attendanceApi.today(), attendanceApi.schedule()])
+      .then(([t, s]) => {
+        setToday(t.attendance);
+        setSchedule(s);
+      })
       .catch((e) => notify('error', errorMessage(e)))
       .finally(() => setLoading(false));
   }, [notify]);
@@ -43,6 +49,19 @@ export function CheckInPage() {
     }
   };
 
+  const checkOut = async () => {
+    setCheckingOut(true);
+    try {
+      setToday(await attendanceApi.checkOut());
+      notify('success', 'Clock out berhasil dicatat');
+    } catch (err) {
+      notify('error', errorMessage(err));
+    } finally {
+      setCheckingOut(false);
+      setConfirmOut(false);
+    }
+  };
+
   if (loading) return <PageLoader />;
 
   return (
@@ -53,8 +72,23 @@ export function CheckInPage() {
           <LiveClock />
           <div className="status-row">
             <span>Status hari ini</span>
-            {today ? <Badge tone="success">Sudah absen</Badge> : <Badge tone="danger">Belum absen</Badge>}
+            {!today ? (
+              <Badge tone="danger">Belum absen</Badge>
+            ) : today.checkOutAt ? (
+              <Badge tone="success">Sudah clock out</Badge>
+            ) : (
+              <Badge tone="info">Sedang bekerja</Badge>
+            )}
           </div>
+          {schedule && (
+            <div className="status-row">
+              <span>Jam kerja</span>
+              <span>
+                {schedule.checkInTime} – {schedule.checkOutTime}
+                {schedule.lateToleranceMinutes > 0 && <span className="muted"> (toleransi {schedule.lateToleranceMinutes} mnt)</span>}
+              </span>
+            </div>
+          )}
         </Card>
 
         {today ? (
@@ -66,11 +100,23 @@ export function CheckInPage() {
                 <dd>{formatDate(today.checkInAt)}</dd>
                 <dt>Jam absen</dt>
                 <dd>{formatTime(today.checkInAt)}</dd>
+                <dt>Jam pulang</dt>
+                <dd>{today.checkOutAt ? formatTime(today.checkOutAt) : '-'}</dd>
+                <dt>Status</dt>
+                <dd>
+                  <AttendanceStatus a={today} />
+                </dd>
                 <dt>Catatan</dt>
                 <dd>{today.notes || '-'}</dd>
               </dl>
             </div>
-            <p className="muted small">Anda sudah melakukan absen hari ini. Terima kasih!</p>
+            {today.checkOutAt ? (
+              <p className="muted small">Anda sudah clock out hari ini. Terima kasih!</p>
+            ) : (
+              <Button onClick={() => setConfirmOut(true)} loading={checkingOut} className="btn-block">
+                Clock Out
+              </Button>
+            )}
           </Card>
         ) : (
           <Card title="Absen WFH">
@@ -93,6 +139,15 @@ export function CheckInPage() {
           </Card>
         )}
       </div>
+      <ConfirmDialog
+        open={confirmOut}
+        title="Clock Out"
+        message="Clock out sekarang? Jam pulang dicatat server dan tidak dapat diubah setelahnya."
+        confirmLabel="Clock Out"
+        loading={checkingOut}
+        onConfirm={checkOut}
+        onCancel={() => setConfirmOut(false)}
+      />
     </>
   );
 }

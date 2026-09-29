@@ -6,6 +6,7 @@ import {
   Get,
   Inject,
   Post,
+  Put,
   Query,
   UploadedFile,
   UseInterceptors,
@@ -19,7 +20,7 @@ import { diskStorage } from 'multer';
 import { extname, join, resolve } from 'path';
 import { CurrentUser, Roles } from '../auth/decorators';
 import { sendRpc } from '../common/send-rpc';
-import { AttendanceQueryDto, CheckInDto } from './attendance.dto';
+import { AttendanceQueryDto, CheckInDto, WorkScheduleDto } from './attendance.dto';
 
 const uploadDir = () => resolve(process.env.UPLOAD_DIR || 'uploads');
 
@@ -71,6 +72,12 @@ export class AttendanceController {
     }
   }
 
+  @Post('check-out')
+  @Roles(Role.EMPLOYEE)
+  checkOut(@CurrentUser() user: JwtPayload) {
+    return sendRpc(this.attendance, Patterns.ATTENDANCE_CHECK_OUT, { employeeId: user.employeeId });
+  }
+
   @Get('today')
   @Roles(Role.EMPLOYEE)
   today(@CurrentUser() user: JwtPayload) {
@@ -81,6 +88,18 @@ export class AttendanceController {
   @Roles(Role.EMPLOYEE)
   myHistory(@CurrentUser() user: JwtPayload, @Query() query: AttendanceQueryDto) {
     return sendRpc(this.attendance, Patterns.ATTENDANCE_FIND_ALL, { ...query, employeeId: user.employeeId });
+  }
+
+  // Jam kerja: dibaca semua user (untuk info di halaman absen), diubah hanya oleh Admin HRD
+  @Get('schedule')
+  getSchedule() {
+    return sendRpc(this.attendance, Patterns.SCHEDULE_GET, {});
+  }
+
+  @Put('schedule')
+  @Roles(Role.ADMIN)
+  updateSchedule(@Body() dto: WorkScheduleDto) {
+    return sendRpc(this.attendance, Patterns.SCHEDULE_UPDATE, dto);
   }
 
   // Monitoring absensi untuk Admin HRD (view only)

@@ -78,7 +78,7 @@ export function Select({ label, error, id, children, ...rest }: FieldProps & Sel
 }
 
 /* ---------- Badge ---------- */
-export function Badge({ tone = 'neutral', children }: { tone?: 'success' | 'danger' | 'neutral' | 'info'; children: ReactNode }) {
+export function Badge({ tone = 'neutral', children }: { tone?: 'success' | 'danger' | 'warning' | 'neutral' | 'info'; children: ReactNode }) {
   return <span className={`badge badge-${tone}`}>{children}</span>;
 }
 

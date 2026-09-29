@@ -29,6 +29,9 @@ export interface Attendance {
   employee?: Employee;
   attendanceDate: string;
   checkInAt: string;
+  checkOutAt: string | null;
+  lateMinutes: number;
+  earlyLeaveMinutes: number;
   photoPath: string;
   notes: string | null;
   createdAt: string;
@@ -59,8 +62,20 @@ export interface ListQuery {
   limit?: number;
 }
 
+export type AttendanceStatusFilter = 'LATE' | 'EARLY_LEAVE' | 'ON_TIME';
+
 export interface AttendanceQuery extends ListQuery {
   startDate?: string;
   endDate?: string;
   employeeId?: number;
+  status?: AttendanceStatusFilter;
 }
+
+export interface WorkSchedule {
+  checkInTime: string; // HH:mm
+  checkOutTime: string;
+  lateToleranceMinutes: number;
+  updatedAt: string | null;
+}
+
+export type WorkScheduleInput = Omit<WorkSchedule, 'updatedAt'>;

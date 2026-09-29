@@ -27,7 +27,7 @@ Backend terdiri dari satu **API Gateway** (HTTP) dan tiga **microservice** (TCP)
 | `gateway` | 3000 (HTTP) | REST API untuk frontend, validasi input, JWT guard & role guard, upload foto, Swagger |
 | `auth-service` | 4001 (TCP) | Login, profil, ganti password |
 | `employee-service` | 4002 (TCP) | CRUD master karyawan beserta akun login-nya |
-| `attendance-service` | 4003 (TCP) | Absen harian, status hari ini, riwayat & monitoring absensi |
+| `attendance-service` | 4003 (TCP) | Absen harian & clock out, jam kerja, status terlambat/pulang cepat, riwayat & monitoring absensi |
 
 Entity TypeORM, koneksi database, dan seeder ada di `backend/libs/common` dan dipakai bersama oleh semua service.
 
@@ -37,7 +37,8 @@ Entity TypeORM, koneksi database, dan seeder ada di `backend/libs/common` dan di
 |---|---|---|
 | `users` | Akun login (email, password hash, role) | `employee_id` → `employees.id` (1:1, nullable untuk admin) |
 | `employees` | Master karyawan (NIK, nama, email, telepon, jabatan, departemen, tgl. bergabung, status aktif) | NIK & email unik |
-| `attendances` | Absensi (tanggal, jam absen, path foto, catatan) | `employee_id` → `employees.id`; unik per karyawan per tanggal |
+| `attendances` | Absensi (tanggal, jam absen, jam pulang, menit terlambat, menit pulang cepat, path foto, catatan) | `employee_id` → `employees.id`; unik per karyawan per tanggal |
+| `work_schedules` | Jam kerja (jam masuk, jam pulang, toleransi terlambat), satu baris untuk semua karyawan | - |
 
 Menghapus karyawan ikut menghapus akun login dan riwayat absensinya (`ON DELETE CASCADE`).
 
@@ -166,52 +167,9 @@ Ringkasan endpoint (semua dengan prefix `/api`):
 | PUT | `/employees/:id` | Admin | Ubah data / status / reset password |
 | DELETE | `/employees/:id` | Admin | Hapus karyawan |
 | POST | `/attendances/check-in` | Karyawan | Absen dengan foto (`multipart/form-data`) |
+| POST | `/attendances/check-out` | Karyawan | Clock out (jam pulang dicatat server) |
 | GET | `/attendances/today` | Karyawan | Status absen hari ini |
+| GET | `/attendances/schedule` | Semua | Jam kerja yang berlaku |
+| PUT | `/attendances/schedule` | Admin | Ubah jam masuk, jam pulang, dan toleransi terlambat |
 | GET | `/attendances/me` | Karyawan | Riwayat absen sendiri (filter tanggal) |
-| GET | `/attendances` | Admin | Monitoring semua absensi (filter tanggal, cari nama/NIK) |
-
-## Pemetaan Requirement
-
-### Mandatory skill
-
-| Requirement | Implementasi |
-|---|---|
-| Backend: JavaScript/TypeScript | TypeScript di seluruh backend |
-| Backend: NestJS | NestJS 11, monorepo `nest-cli` |
-| Database: MySQL (prefer) | MySQL + TypeORM |
-| Frontend: React.js | React 19 + Vite |
-
-### Objective backend
-
-| Objective | Implementasi |
-|---|---|
-| Struktur database yang proper | 3 tabel ter-normalisasi dengan foreign key, unique constraint (NIK, email, 1 absen/karyawan/hari), cascade delete. Lihat `backend/libs/common/src/entities` |
-| Koneksi ke database | `DatabaseModule` (TypeORM) yang dikonfigurasi lewat `.env` |
-| API dengan konsep microservices | API Gateway (HTTP) meneruskan request ke 3 microservice independen lewat transport TCP |
-| Manipulasi data (CRUD) lewat API | CRUD karyawan lengkap (`POST/GET/PUT/DELETE /employees`), create & read absensi |
-
-### Objective frontend
-
-| Objective | Implementasi |
-|---|---|
-| Membuat page/screen | Login, Absen, Riwayat (karyawan), Dashboard, Karyawan, Monitoring Absensi (admin) |
-| Memanggil API backend | `frontend/src/api`: fetch client dengan JWT otomatis, penanganan error, dan logout otomatis saat token kedaluwarsa |
-| Custom component | `Button`, `Input`, `Select`, `Modal`, `ConfirmDialog`, `Card`, `StatCard`, `Badge`, `DataTable` (generik, jadi tampilan kartu di mobile), `Pagination`, `PhotoUpload` (kamera/file + preview + validasi), `PhotoThumb`, `LiveClock`, `AttendanceFilters`, `ProtectedRoute`, `Layout` |
-
-### Use case 1: Aplikasi Absensi WFH Karyawan
-
-| Kebutuhan | Implementasi |
-|---|---|
-| Karyawan dapat login | Halaman Login dengan JWT, diarahkan sesuai role |
-| Absen dengan capture tanggal & waktu | Jam live di layar. Waktu absen dicatat oleh **server** sehingga tidak bisa dimanipulasi dari sisi klien. Absen dibatasi 1 kali per hari |
-| Upload foto bukti WFH | Ambil foto langsung dari kamera atau pilih file, dengan preview sebelum dikirim |
-| (Tambahan) | Riwayat absensi pribadi dengan filter tanggal, ganti password |
-
-### Use case 2: Aplikasi Monitoring Karyawan
-
-| Kebutuhan | Implementasi |
-|---|---|
-| Admin HRD menambah data karyawan | Form Tambah Karyawan, sekaligus membuat akun login karyawan |
-| Admin HRD meng-update data karyawan | Form Edit: data diri, status aktif/nonaktif, reset password |
-| Kontrol absensi (view only) | Halaman Monitoring Absensi: tanpa aksi ubah/hapus, dengan filter tanggal, pencarian nama/NIK, dan foto bukti yang bisa diperbesar |
-| (Tambahan) | Dashboard ringkasan hari ini, hapus karyawan dengan konfirmasi, karyawan nonaktif tidak bisa login/absen |
+| GET | `/attendances` | Admin | Monitoring semua absensi (filter tanggal, status, cari nama/NIK) |

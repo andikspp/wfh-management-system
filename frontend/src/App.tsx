@@ -7,6 +7,7 @@ import { ToastProvider } from './context/ToastContext';
 import { AttendancesPage } from './pages/admin/AttendancesPage';
 import { DashboardPage } from './pages/admin/DashboardPage';
 import { EmployeesPage } from './pages/admin/EmployeesPage';
+import { SettingsPage } from './pages/admin/SettingsPage';
 import { CheckInPage } from './pages/employee/CheckInPage';
 import { HistoryPage } from './pages/employee/HistoryPage';
 import { LoginPage } from './pages/LoginPage';
@@ -20,6 +21,7 @@ const adminNav = [
   { to: '/admin', label: 'Dashboard' },
   { to: '/admin/employees', label: 'Karyawan' },
   { to: '/admin/attendances', label: 'Absensi' },
+  { to: '/admin/settings', label: 'Jam Kerja' },
 ];
 
 function HomeRedirect() {
@@ -48,6 +50,7 @@ export default function App() {
                 <Route index element={<DashboardPage />} />
                 <Route path="employees" element={<EmployeesPage />} />
                 <Route path="attendances" element={<AttendancesPage />} />
+                <Route path="settings" element={<SettingsPage />} />
               </Route>
             </Route>
 

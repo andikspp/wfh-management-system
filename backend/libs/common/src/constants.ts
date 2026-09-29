@@ -20,6 +20,18 @@ export const Patterns = {
   EMPLOYEE_DELETE: 'employee.delete',
 
   ATTENDANCE_CHECK_IN: 'attendance.check_in',
+  ATTENDANCE_CHECK_OUT: 'attendance.check_out',
   ATTENDANCE_TODAY: 'attendance.today',
   ATTENDANCE_FIND_ALL: 'attendance.find_all',
+
+  SCHEDULE_GET: 'schedule.get',
+  SCHEDULE_UPDATE: 'schedule.update',
 } as const;
+
+export const DEFAULT_WORK_SCHEDULE = {
+  checkInTime: '08:00',
+  checkOutTime: '17:00',
+  lateToleranceMinutes: 15,
+};
+
+export type AttendanceStatusFilter = 'LATE' | 'EARLY_LEAVE' | 'ON_TIME';

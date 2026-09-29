@@ -30,6 +30,17 @@ export class Attendance {
   @Column({ name: 'check_in_at', type: 'datetime' })
   checkInAt: Date;
 
+  // Null selama karyawan belum clock out
+  @Column({ name: 'check_out_at', type: 'datetime', nullable: true })
+  checkOutAt: Date | null;
+
+  // Dihitung dari jam kerja yang berlaku saat absen, agar perubahan jadwal tidak mengubah riwayat
+  @Column({ name: 'late_minutes', default: 0 })
+  lateMinutes: number;
+
+  @Column({ name: 'early_leave_minutes', default: 0 })
+  earlyLeaveMinutes: number;
+
   @Column({ name: 'photo_path', length: 255 })
   photoPath: string;
 

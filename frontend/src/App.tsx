@@ -13,15 +13,15 @@ import { HistoryPage } from './pages/employee/HistoryPage';
 import { LoginPage } from './pages/LoginPage';
 
 const employeeNav = [
-  { to: '/employee', label: 'Absen' },
-  { to: '/employee/history', label: 'Riwayat' },
+  { to: '/employee', label: 'Absen', icon: 'camera' as const },
+  { to: '/employee/history', label: 'Riwayat', icon: 'calendar-check' as const },
 ];
 
 const adminNav = [
-  { to: '/admin', label: 'Dashboard' },
-  { to: '/admin/employees', label: 'Karyawan' },
-  { to: '/admin/attendances', label: 'Absensi' },
-  { to: '/admin/settings', label: 'Jam Kerja' },
+  { to: '/admin', label: 'Dashboard', icon: 'home' as const },
+  { to: '/admin/employees', label: 'Karyawan', icon: 'users' as const },
+  { to: '/admin/attendances', label: 'Absensi', icon: 'calendar-check' as const },
+  { to: '/admin/settings', label: 'Jam Kerja', icon: 'clock' as const },
 ];
 
 function HomeRedirect() {

@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react';
-import { Spinner } from './ui';
+import { EmptyState } from './ui';
+import { Icon, type IconName } from './icons';
 
 export interface Column<T> {
   header: string;
@@ -13,10 +14,13 @@ interface Props<T> {
   rowKey: (row: T) => string | number;
   loading?: boolean;
   emptyText?: string;
+  emptyIcon?: IconName;
+  emptyHint?: string;
+  emptyAction?: ReactNode;
 }
 
 /** Tabel generik; di layar kecil tiap baris tampil sebagai kartu (lihat .table di CSS) */
-export function DataTable<T>({ columns, rows, rowKey, loading, emptyText = 'Belum ada data' }: Props<T>) {
+export function DataTable<T>({ columns, rows, rowKey, loading, emptyText = 'Belum ada data', emptyIcon, emptyHint, emptyAction }: Props<T>) {
   return (
     <div className="table-wrap">
       <table className="table">
@@ -31,15 +35,19 @@ export function DataTable<T>({ columns, rows, rowKey, loading, emptyText = 'Belu
         </thead>
         <tbody>
           {loading ? (
-            <tr>
-              <td colSpan={columns.length} className="table-state">
-                <Spinner />
-              </td>
-            </tr>
+            Array.from({ length: 4 }).map((_, i) => (
+              <tr key={i} className="skeleton-row" aria-hidden="true">
+                {columns.map((c) => (
+                  <td key={c.header} className={c.className}>
+                    <span className="skeleton-bar" />
+                  </td>
+                ))}
+              </tr>
+            ))
           ) : rows.length === 0 ? (
             <tr>
               <td colSpan={columns.length} className="table-state">
-                {emptyText}
+                <EmptyState icon={emptyIcon} title={emptyText} hint={emptyHint} action={emptyAction} />
               </td>
             </tr>
           ) : (
@@ -70,13 +78,13 @@ export function Pagination({ page, limit, total, onChange }: { page: number; lim
       </span>
       <div className="pagination-controls">
         <button type="button" className="btn btn-secondary btn-sm" disabled={page <= 1} onClick={() => onChange(page - 1)}>
-          ‹ Sebelumnya
+          <Icon name="chevron-left" size={15} /> Sebelumnya
         </button>
         <span>
           {page} / {pages}
         </span>
         <button type="button" className="btn btn-secondary btn-sm" disabled={page >= pages} onClick={() => onChange(page + 1)}>
-          Berikutnya ›
+          Berikutnya <Icon name="chevron-right" size={15} />
         </button>
       </div>
     </div>

@@ -1,6 +1,7 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, type DragEvent } from 'react';
 import { fileUrl } from '../api/client';
 import { Button, Modal } from './ui';
+import { Icon } from './icons';
 
 const MAX_SIZE = 5 * 1024 * 1024;
 const ACCEPT = ['image/jpeg', 'image/png', 'image/webp'];
@@ -18,6 +19,7 @@ export function PhotoUpload({ value, onChange, error }: Props) {
   const [stream, setStream] = useState<MediaStream | null>(null);
   const [preview, setPreview] = useState<string | null>(null);
   const [localError, setLocalError] = useState('');
+  const [dragOver, setDragOver] = useState(false);
 
   useEffect(() => {
     if (!value) {
@@ -68,39 +70,59 @@ export function PhotoUpload({ value, onChange, error }: Props) {
     );
   };
 
+  const handleDrop = (e: DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    setDragOver(false);
+    if (stream) return;
+    pickFile(e.dataTransfer.files?.[0]);
+  };
+
   const shownError = localError || error;
   return (
     <div className="photo-upload">
-      <div className={`photo-frame ${shownError ? 'invalid' : ''}`}>
+      <div
+        className={`photo-frame ${shownError ? 'invalid' : ''} ${dragOver ? 'photo-frame-drag' : ''}`}
+        onDragOver={(e) => {
+          e.preventDefault();
+          if (!stream) setDragOver(true);
+        }}
+        onDragLeave={() => setDragOver(false)}
+        onDrop={handleDrop}
+      >
         {stream ? (
           <video ref={videoRef} autoPlay playsInline muted />
         ) : preview ? (
           <img src={preview} alt="Preview foto bukti WFH" />
         ) : (
           <div className="photo-placeholder">
-            <span aria-hidden>📷</span>
+            <span className="empty-state-icon" aria-hidden>
+              <Icon name="camera" size={24} />
+            </span>
             <p>Belum ada foto</p>
+            <small className="muted">Seret & lepas, atau pilih dari tombol di bawah</small>
           </div>
         )}
       </div>
       <div className="photo-actions">
         {stream ? (
           <>
-            <Button onClick={capture}>Ambil Foto</Button>
+            <Button icon="camera" onClick={capture}>
+              Ambil Foto
+            </Button>
             <Button variant="secondary" onClick={() => setStream(null)}>
               Batal
             </Button>
           </>
         ) : (
           <>
-            <Button variant="secondary" onClick={openCamera}>
+            <Button variant="secondary" icon="camera" onClick={openCamera}>
               Buka Kamera
             </Button>
-            <Button variant="secondary" onClick={() => fileRef.current?.click()}>
+            <Button variant="secondary" icon="upload" onClick={() => fileRef.current?.click()}>
               Pilih File
             </Button>
             {value && (
-              <Button variant="ghost" onClick={() => onChange(null)}>
+              <Button variant="ghost" icon="trash" onClick={() => onChange(null)}>
                 Hapus
               </Button>
             )}

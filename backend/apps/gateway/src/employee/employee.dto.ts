@@ -9,16 +9,16 @@ import {
   IsOptional,
   IsString,
   Max,
+  Matches,
   MaxLength,
   Min,
   MinLength,
 } from 'class-validator';
 
 export class CreateEmployeeDto {
-  @ApiProperty({ example: 'EMP001' })
+  @ApiProperty({ example: '3174012501900001', description: 'NIK KTP, 16 digit angka' })
   @IsString()
-  @IsNotEmpty()
-  @MaxLength(20)
+  @Matches(/^\d{16}$/, { message: 'NIK harus 16 digit angka' })
   nik: string;
 
   @ApiProperty({ example: 'Budi Santoso' })

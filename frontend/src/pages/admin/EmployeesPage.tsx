@@ -3,6 +3,7 @@ import { employeeApi } from '../../api';
 import type { Employee } from '../../api/types';
 import { DataTable, Pagination, type Column } from '../../components/DataTable';
 import { Badge, Button, Card, ConfirmDialog, PageHeader } from '../../components/ui';
+import { Icon } from '../../components/icons';
 import { useToast } from '../../context/ToastContext';
 import { useDebounced, usePaginated } from '../../hooks';
 import { errorMessage, formatShortDate } from '../../utils';
@@ -76,10 +77,10 @@ export function EmployeesPage() {
       className: 'col-actions',
       render: (e) => (
         <div className="row-actions">
-          <Button size="sm" variant="secondary" onClick={() => openEdit(e)}>
+          <Button size="sm" variant="secondary" icon="pencil" onClick={() => openEdit(e)}>
             Edit
           </Button>
-          <Button size="sm" variant="ghost" className="text-danger" onClick={() => setDeleting(e)}>
+          <Button size="sm" variant="ghost" icon="trash" className="text-danger" onClick={() => setDeleting(e)}>
             Hapus
           </Button>
         </div>
@@ -89,22 +90,58 @@ export function EmployeesPage() {
 
   return (
     <>
-      <PageHeader title="Data Karyawan" subtitle="Kelola master data karyawan" actions={<Button onClick={openCreate}>+ Tambah Karyawan</Button>} />
+      <PageHeader
+        title="Data Karyawan"
+        subtitle="Kelola master data karyawan"
+        icon="users"
+        actions={
+          <Button icon="plus" onClick={openCreate}>
+            Tambah Karyawan
+          </Button>
+        }
+      />
       <Card>
         <div className="toolbar">
-          <input
-            className="search"
-            type="search"
-            placeholder="Cari nama, NIK, email, departemen…"
-            value={search}
-            onChange={(e) => {
-              setSearch(e.target.value);
-              setPage(1);
-            }}
-          />
+          <div className="search-field">
+            <Icon name="search" size={16} />
+            <input
+              className="search"
+              type="search"
+              placeholder="Cari nama, NIK, email, departemen…"
+              value={search}
+              onChange={(e) => {
+                setSearch(e.target.value);
+                setPage(1);
+              }}
+            />
+          </div>
         </div>
-        {list.error && <div className="alert alert-error">{list.error}</div>}
-        <DataTable columns={columns} rows={list.data} rowKey={(e) => e.id} loading={list.loading} emptyText="Belum ada data karyawan" />
+        {list.error && (
+          <div className="alert alert-error">
+            <Icon name="alert-triangle" size={16} />
+            {list.error}
+          </div>
+        )}
+        <DataTable
+          columns={columns}
+          rows={list.data}
+          rowKey={(e) => e.id}
+          loading={list.loading}
+          emptyText={debouncedSearch ? `Tidak ada karyawan yang cocok dengan "${debouncedSearch}"` : 'Belum ada data karyawan'}
+          emptyHint={debouncedSearch ? 'Coba kata kunci lain, misalnya NIK atau nama departemen.' : 'Tambahkan karyawan pertama agar mereka bisa mulai absen.'}
+          emptyIcon={debouncedSearch ? 'search' : 'user-x'}
+          emptyAction={
+            debouncedSearch ? (
+              <Button size="sm" variant="secondary" icon="x" onClick={() => setSearch('')}>
+                Hapus pencarian
+              </Button>
+            ) : (
+              <Button size="sm" icon="plus" onClick={openCreate}>
+                Tambah Karyawan
+              </Button>
+            )
+          }
+        />
         <Pagination page={page} limit={LIMIT} total={list.total} onChange={setPage} />
       </Card>
 

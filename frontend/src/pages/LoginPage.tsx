@@ -2,6 +2,7 @@ import { useState, type FormEvent } from 'react';
 import { Navigate, useNavigate } from 'react-router-dom';
 import { homeFor } from '../components/ProtectedRoute';
 import { Button, Input } from '../components/ui';
+import { Icon } from '../components/icons';
 import { useAuth } from '../context/AuthContext';
 import { errorMessage } from '../utils';
 
@@ -49,7 +50,12 @@ export function LoginPage() {
             onChange={(e) => setPassword(e.target.value)}
             required
           />
-          {error && <div className="alert alert-error">{error}</div>}
+          {error && (
+            <div className="alert alert-error">
+              <Icon name="alert-triangle" size={16} />
+              {error}
+            </div>
+          )}
           <Button type="submit" loading={loading} className="btn-block">
             Masuk
           </Button>

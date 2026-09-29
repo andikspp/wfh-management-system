@@ -15,7 +15,8 @@ export class Employee {
   @PrimaryGeneratedColumn()
   id: number;
 
-  @Column({ length: 20, unique: true })
+  // NIK KTP: 16 digit angka, disimpan sebagai string agar tidak kehilangan presisi
+  @Column({ length: 16, unique: true })
   nik: string;
 
   @Column({ name: 'full_name', length: 100 })

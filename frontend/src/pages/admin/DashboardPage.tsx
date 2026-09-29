@@ -6,6 +6,7 @@ import { DataTable, type Column } from '../../components/DataTable';
 import { AttendanceStatus } from '../../components/AttendanceStatus';
 import { PhotoThumb } from '../../components/PhotoUpload';
 import { Card, PageHeader, StatCard } from '../../components/ui';
+import { Icon } from '../../components/icons';
 import { useToast } from '../../context/ToastContext';
 import { errorMessage, formatDate, formatTime, toDateInput } from '../../utils';
 
@@ -41,15 +42,29 @@ export function DashboardPage() {
 
   return (
     <>
-      <PageHeader title="Dashboard HRD" subtitle={formatDate(new Date())} />
+      <PageHeader title="Dashboard HRD" subtitle={formatDate(new Date())} icon="home" />
       <div className="stats">
-        <StatCard label="Total Karyawan" value={loading ? '…' : stats.employees} />
-        <StatCard label="Sudah Absen Hari Ini" value={loading ? '…' : stats.today} />
-        <StatCard label="Belum Absen" value={loading ? '…' : notYet} hint="termasuk karyawan nonaktif" />
-        <StatCard label="Terlambat Hari Ini" value={loading ? '…' : stats.late} />
+        <StatCard icon="users" label="Total Karyawan" value={loading ? '…' : stats.employees} />
+        <StatCard icon="check-circle" tone="success" label="Sudah Absen Hari Ini" value={loading ? '…' : stats.today} />
+        <StatCard icon="user-x" label="Belum Absen" value={loading ? '…' : notYet} hint="termasuk karyawan nonaktif" />
+        <StatCard icon="alert-triangle" tone="danger" label="Terlambat Hari Ini" value={loading ? '…' : stats.late} />
       </div>
-      <Card title="Absensi Terbaru Hari Ini" actions={<Link to="/admin/attendances">Lihat semua →</Link>}>
-        <DataTable columns={columns} rows={latest} rowKey={(a) => a.id} loading={loading} emptyText="Belum ada karyawan yang absen hari ini" />
+      <Card
+        title="Absensi Terbaru Hari Ini"
+        actions={
+          <Link to="/admin/attendances" className="link-arrow">
+            Lihat semua <Icon name="chevron-right" size={15} />
+          </Link>
+        }
+      >
+        <DataTable
+          columns={columns}
+          rows={latest}
+          rowKey={(a) => a.id}
+          loading={loading}
+          emptyText="Belum ada karyawan yang absen hari ini"
+          emptyIcon="calendar-check"
+        />
       </Card>
     </>
   );

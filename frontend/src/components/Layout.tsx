@@ -2,10 +2,12 @@ import { useEffect, useRef, useState } from 'react';
 import { NavLink, Outlet } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { ChangePasswordModal } from './ChangePasswordModal';
+import { Icon, type IconName } from './icons';
 
 export interface NavItem {
   to: string;
   label: string;
+  icon: IconName;
 }
 
 export function Layout({ nav }: { nav: NavItem[] }) {
@@ -32,7 +34,8 @@ export function Layout({ nav }: { nav: NavItem[] }) {
           <nav className="nav">
             {nav.map((n) => (
               <NavLink key={n.to} to={n.to} end>
-                {n.label}
+                <Icon name={n.icon} size={17} />
+                <span>{n.label}</span>
               </NavLink>
             ))}
           </nav>
@@ -40,6 +43,7 @@ export function Layout({ nav }: { nav: NavItem[] }) {
             <button type="button" className="user-btn" onClick={() => setMenuOpen((o) => !o)}>
               <span className="avatar">{user?.name.charAt(0).toUpperCase()}</span>
               <span className="user-name">{user?.name}</span>
+              <Icon name="chevron-down" size={15} className={`user-caret ${menuOpen ? 'user-caret-open' : ''}`} />
             </button>
             {menuOpen && (
               <div className="dropdown">
@@ -54,9 +58,11 @@ export function Layout({ nav }: { nav: NavItem[] }) {
                     setPwOpen(true);
                   }}
                 >
+                  <Icon name="key" size={16} />
                   Ganti Password
                 </button>
-                <button type="button" onClick={logout}>
+                <button type="button" className="dropdown-danger" onClick={logout}>
+                  <Icon name="logout" size={16} />
                   Keluar
                 </button>
               </div>

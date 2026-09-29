@@ -3,6 +3,7 @@ import { authApi } from '../api';
 import { useToast } from '../context/ToastContext';
 import { errorMessage } from '../utils';
 import { Button, Input, Modal } from './ui';
+import { Icon } from './icons';
 
 const EMPTY = { oldPassword: '', newPassword: '', confirm: '' };
 
@@ -42,12 +43,17 @@ export function ChangePasswordModal({ open, onClose }: { open: boolean; onClose:
         <Input label="Password Lama" type="password" name="oldPassword" value={form.oldPassword} onChange={set('oldPassword')} required />
         <Input label="Password Baru" type="password" name="newPassword" value={form.newPassword} onChange={set('newPassword')} required />
         <Input label="Konfirmasi Password Baru" type="password" name="confirm" value={form.confirm} onChange={set('confirm')} required />
-        {error && <div className="alert alert-error">{error}</div>}
+        {error && (
+          <div className="alert alert-error">
+            <Icon name="alert-triangle" size={16} />
+            {error}
+          </div>
+        )}
         <div className="form-actions">
           <Button variant="secondary" onClick={close}>
             Batal
           </Button>
-          <Button type="submit" loading={saving}>
+          <Button type="submit" icon="key" loading={saving}>
             Simpan
           </Button>
         </div>

@@ -1,4 +1,5 @@
-import { useEffect, type ButtonHTMLAttributes, type InputHTMLAttributes, type ReactNode, type SelectHTMLAttributes, type TextareaHTMLAttributes } from 'react';
+import { useEffect, useState, type ButtonHTMLAttributes, type InputHTMLAttributes, type ReactNode, type SelectHTMLAttributes, type TextareaHTMLAttributes } from 'react';
+import { Icon, type IconName } from './icons';
 
 /* ---------- Spinner ---------- */
 export function Spinner({ small }: { small?: boolean }) {
@@ -9,6 +10,7 @@ export function PageLoader() {
   return (
     <div className="page-loader">
       <Spinner />
+      <p className="muted small">Memuat…</p>
     </div>
   );
 }
@@ -18,12 +20,13 @@ interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   variant?: 'primary' | 'secondary' | 'danger' | 'ghost';
   size?: 'sm' | 'md';
   loading?: boolean;
+  icon?: IconName;
 }
 
-export function Button({ variant = 'primary', size = 'md', loading, disabled, children, className = '', type = 'button', ...rest }: ButtonProps) {
+export function Button({ variant = 'primary', size = 'md', loading, disabled, children, className = '', type = 'button', icon, ...rest }: ButtonProps) {
   return (
     <button type={type} className={`btn btn-${variant} btn-${size} ${className}`} disabled={disabled || loading} {...rest}>
-      {loading && <Spinner small />}
+      {loading ? <Spinner small /> : icon && <Icon name={icon} size={size === 'sm' ? 15 : 17} />}
       {children}
     </button>
   );
@@ -48,11 +51,28 @@ function Field({ label, error, htmlFor, required, children }: FieldProps & { htm
   );
 }
 
-export function Input({ label, error, id, ...rest }: FieldProps & InputHTMLAttributes<HTMLInputElement>) {
+export function Input({ label, error, id, type, ...rest }: FieldProps & InputHTMLAttributes<HTMLInputElement>) {
   const inputId = id ?? rest.name;
+  const [reveal, setReveal] = useState(false);
+  const input = <input id={inputId} className={error ? 'invalid' : ''} type={type === 'password' && reveal ? 'text' : type} {...rest} />;
   return (
     <Field label={label} error={error} htmlFor={inputId} required={rest.required}>
-      <input id={inputId} className={error ? 'invalid' : ''} {...rest} />
+      {type === 'password' ? (
+        <div className="password-field">
+          {input}
+          <button
+            type="button"
+            className="icon-btn password-toggle"
+            onClick={() => setReveal((r) => !r)}
+            aria-label={reveal ? 'Sembunyikan password' : 'Tampilkan password'}
+            title={reveal ? 'Sembunyikan password' : 'Tampilkan password'}
+          >
+            <Icon name={reveal ? 'eye-off' : 'eye'} size={17} />
+          </button>
+        </div>
+      ) : (
+        input
+      )}
     </Field>
   );
 }
@@ -97,24 +117,55 @@ export function Card({ title, actions, children }: { title?: string; actions?: R
   );
 }
 
-export function StatCard({ label, value, hint }: { label: string; value: ReactNode; hint?: string }) {
+export function StatCard({ label, value, hint, icon, tone = 'primary' }: { label: string; value: ReactNode; hint?: string; icon?: IconName; tone?: 'primary' | 'success' | 'danger' | 'warning' }) {
   return (
     <div className="stat-card">
-      <span className="muted">{label}</span>
-      <strong>{value}</strong>
-      {hint && <small className="muted">{hint}</small>}
+      {icon && (
+        <span className={`stat-icon stat-icon-${tone}`}>
+          <Icon name={icon} size={20} />
+        </span>
+      )}
+      <div className="stat-body">
+        <span className="muted">{label}</span>
+        <strong>{value}</strong>
+        {hint && <small className="muted">{hint}</small>}
+      </div>
     </div>
   );
 }
 
-export function PageHeader({ title, subtitle, actions }: { title: string; subtitle?: string; actions?: ReactNode }) {
+export function PageHeader({ title, subtitle, actions, icon }: { title: string; subtitle?: string; actions?: ReactNode; icon?: IconName }) {
+  useEffect(() => {
+    document.title = `${title} · Dexa WFH`;
+  }, [title]);
   return (
     <div className="page-header">
-      <div>
-        <h1>{title}</h1>
-        {subtitle && <p className="muted">{subtitle}</p>}
+      <div className="page-header-title">
+        {icon && (
+          <span className="page-header-icon">
+            <Icon name={icon} size={22} />
+          </span>
+        )}
+        <div>
+          <h1>{title}</h1>
+          {subtitle && <p className="muted">{subtitle}</p>}
+        </div>
       </div>
       {actions}
+    </div>
+  );
+}
+
+/* ---------- Empty state ---------- */
+export function EmptyState({ icon = 'inbox', title, hint, action }: { icon?: IconName; title: string; hint?: string; action?: ReactNode }) {
+  return (
+    <div className="empty-state">
+      <span className="empty-state-icon">
+        <Icon name={icon} size={26} />
+      </span>
+      <p>{title}</p>
+      {hint && <small className="muted">{hint}</small>}
+      {action}
     </div>
   );
 }
@@ -144,7 +195,7 @@ export function Modal({ open, title, onClose, children, footer, wide }: ModalPro
         <div className="modal-header">
           <h3>{title}</h3>
           <button type="button" className="icon-btn" onClick={onClose} aria-label="Tutup">
-            ×
+            <Icon name="x" size={18} />
           </button>
         </div>
         <div className="modal-body">{children}</div>
@@ -159,10 +210,14 @@ export function ConfirmDialog({
   title,
   message,
   confirmLabel = 'Hapus',
+  tone = 'danger',
+  icon = 'alert-triangle',
   loading,
   onConfirm,
   onCancel,
 }: {
+  tone?: 'danger' | 'primary';
+  icon?: IconName;
   open: boolean;
   title: string;
   message: ReactNode;
@@ -181,13 +236,18 @@ export function ConfirmDialog({
           <Button variant="secondary" onClick={onCancel} disabled={loading}>
             Batal
           </Button>
-          <Button variant="danger" onClick={onConfirm} loading={loading}>
+          <Button variant={tone} onClick={onConfirm} loading={loading}>
             {confirmLabel}
           </Button>
         </>
       }
     >
-      <p>{message}</p>
+      <div className="confirm-body">
+        <span className={`confirm-icon confirm-icon-${tone}`}>
+          <Icon name={icon} size={20} />
+        </span>
+        <p>{message}</p>
+      </div>
     </Modal>
   );
 }

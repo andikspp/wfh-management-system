@@ -2,6 +2,7 @@ import { useEffect, useState, type ChangeEvent, type FormEvent } from 'react';
 import { employeeApi } from '../../api';
 import type { Employee, EmployeeInput } from '../../api/types';
 import { Button, Input, Modal, Select } from '../../components/ui';
+import { Icon } from '../../components/icons';
 import { useToast } from '../../context/ToastContext';
 import { errorMessage, toDateInput } from '../../utils';
 
@@ -59,7 +60,8 @@ export function EmployeeFormModal({ open, employee, onClose, onSaved }: Props) {
 
   const validate = () => {
     const errs: typeof errors = {};
-    if (!form.nik.trim()) errs.nik = 'NIK wajib diisi';
+    if (!form.nik) errs.nik = 'NIK wajib diisi';
+    else if (!/^\d{16}$/.test(form.nik)) errs.nik = `NIK harus 16 digit angka (baru ${form.nik.length} digit)`;
     if (!form.fullName.trim()) errs.fullName = 'Nama wajib diisi';
     if (!/^\S+@\S+\.\S+$/.test(form.email)) errs.email = 'Format email tidak valid';
     if (!form.position.trim()) errs.position = 'Jabatan wajib diisi';
@@ -77,7 +79,7 @@ export function EmployeeFormModal({ open, employee, onClose, onSaved }: Props) {
     setSaving(true);
     setApiError('');
     const payload: EmployeeInput = {
-      nik: form.nik.trim(),
+      nik: form.nik,
       fullName: form.fullName.trim(),
       email: form.email.trim(),
       phone: form.phone.trim() || undefined,
@@ -107,7 +109,18 @@ export function EmployeeFormModal({ open, employee, onClose, onSaved }: Props) {
     <Modal open={open} title={isEdit ? 'Edit Karyawan' : 'Tambah Karyawan'} onClose={onClose} wide>
       <form onSubmit={submit} className="form" noValidate>
         <div className="form-grid">
-          <Input label="NIK" name="nik" value={form.nik} onChange={set('nik')} error={errors.nik} maxLength={20} required />
+          <Input
+            label="NIK (16 digit)"
+            name="nik"
+            inputMode="numeric"
+            placeholder="3174012501900001"
+            value={form.nik}
+            // Hanya terima angka, termasuk saat paste (spasi/titik ikut dibuang)
+            onChange={(e) => setForm((f) => ({ ...f, nik: e.target.value.replace(/\D/g, '').slice(0, 16) }))}
+            error={errors.nik}
+            maxLength={16}
+            required
+          />
           <Input label="Nama Lengkap" name="fullName" value={form.fullName} onChange={set('fullName')} error={errors.fullName} maxLength={100} required />
           <Input label="Email (untuk login)" type="email" name="email" value={form.email} onChange={set('email')} error={errors.email} required />
           <Input label="No. Telepon" name="phone" value={form.phone} onChange={set('phone')} maxLength={20} />
@@ -131,12 +144,17 @@ export function EmployeeFormModal({ open, employee, onClose, onSaved }: Props) {
             </Select>
           )}
         </div>
-        {apiError && <div className="alert alert-error">{apiError}</div>}
+        {apiError && (
+          <div className="alert alert-error">
+            <Icon name="alert-triangle" size={16} />
+            {apiError}
+          </div>
+        )}
         <div className="form-actions">
           <Button variant="secondary" onClick={onClose} disabled={saving}>
             Batal
           </Button>
-          <Button type="submit" loading={saving}>
+          <Button type="submit" icon={isEdit ? 'pencil' : 'plus'} loading={saving}>
             {isEdit ? 'Simpan Perubahan' : 'Tambah Karyawan'}
           </Button>
         </div>

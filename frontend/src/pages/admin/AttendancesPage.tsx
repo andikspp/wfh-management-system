@@ -5,7 +5,8 @@ import { AttendanceFilters, type DateRange } from '../../components/AttendanceFi
 import { DataTable, Pagination, type Column } from '../../components/DataTable';
 import { AttendanceStatus } from '../../components/AttendanceStatus';
 import { PhotoThumb } from '../../components/PhotoUpload';
-import { Card, PageHeader } from '../../components/ui';
+import { Button, Card, PageHeader } from '../../components/ui';
+import { Icon } from '../../components/icons';
 import { useDebounced, usePaginated } from '../../hooks';
 import { formatShortDate, formatTime } from '../../utils';
 import { EmployeeCell } from './DashboardPage';
@@ -21,6 +22,14 @@ export function AttendancesPage() {
   const debouncedSearch = useDebounced(search);
   const list = usePaginated(attendanceApi.list, { ...range, status: status || undefined, search: debouncedSearch, page, limit: LIMIT });
 
+  const filtered = !!(range.startDate || range.endDate || status || debouncedSearch);
+  const resetFilters = () => {
+    setRange({ startDate: '', endDate: '' });
+    setStatus('');
+    setSearch('');
+    setPage(1);
+  };
+
   const columns: Column<Attendance>[] = [
     { header: 'No', render: (_a, i) => (page - 1) * LIMIT + i + 1, className: 'col-narrow' },
     { header: 'Karyawan', render: (a) => <EmployeeCell a={a} /> },
@@ -34,7 +43,7 @@ export function AttendancesPage() {
 
   return (
     <>
-      <PageHeader title="Monitoring Absensi" subtitle="Data absensi WFH yang disubmit karyawan (hanya lihat)" />
+      <PageHeader title="Monitoring Absensi" subtitle="Data absensi WFH yang disubmit karyawan" icon="calendar-check" />
       <Card>
         <AttendanceFilters
           {...range}
@@ -53,8 +62,28 @@ export function AttendancesPage() {
             setPage(1);
           }}
         />
-        {list.error && <div className="alert alert-error">{list.error}</div>}
-        <DataTable columns={columns} rows={list.data} rowKey={(a) => a.id} loading={list.loading} emptyText="Tidak ada data absensi" />
+        {list.error && (
+          <div className="alert alert-error">
+            <Icon name="alert-triangle" size={16} />
+            {list.error}
+          </div>
+        )}
+        <DataTable
+          columns={columns}
+          rows={list.data}
+          rowKey={(a) => a.id}
+          loading={list.loading}
+          emptyText={filtered ? 'Tidak ada absensi yang sesuai filter' : 'Belum ada absensi yang disubmit'}
+          emptyHint={filtered ? 'Coba perlebar rentang tanggal atau ubah status.' : undefined}
+          emptyIcon={filtered ? 'filter' : 'calendar-check'}
+          emptyAction={
+            filtered && (
+              <Button size="sm" variant="secondary" icon="x" onClick={resetFilters}>
+                Reset filter
+              </Button>
+            )
+          }
+        />
         <Pagination page={page} limit={LIMIT} total={list.total} onChange={setPage} />
       </Card>
     </>

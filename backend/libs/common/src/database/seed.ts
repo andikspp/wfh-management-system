@@ -56,11 +56,11 @@ async function main() {
 
 const DEMO_PASSWORD = 'password123';
 const DEMO_EMPLOYEES = [
-  { nik: 'EMP001', fullName: 'Budi Santoso', email: 'budi@dexa.local', phone: '081234567801', position: 'Software Engineer', department: 'IT', joinDate: '2023-02-01' },
-  { nik: 'EMP002', fullName: 'Siti Rahmawati', email: 'siti@dexa.local', phone: '081234567802', position: 'UI/UX Designer', department: 'IT', joinDate: '2023-06-12' },
-  { nik: 'EMP003', fullName: 'Andi Pratama', email: 'andi@dexa.local', phone: '081234567803', position: 'Finance Staff', department: 'Finance', joinDate: '2022-09-05' },
-  { nik: 'EMP004', fullName: 'Dewi Lestari', email: 'dewi@dexa.local', phone: '081234567804', position: 'HR Officer', department: 'HRD', joinDate: '2024-01-15' },
-  { nik: 'EMP005', fullName: 'Rudi Hartono', email: 'rudi@dexa.local', phone: null, position: 'Marketing Specialist', department: 'Marketing', joinDate: '2021-11-20', isActive: false },
+  { nik: '3174012501900001', fullName: 'Budi Santoso', email: 'budi@dexa.local', phone: '081234567801', position: 'Software Engineer', department: 'IT', joinDate: '2023-02-01' },
+  { nik: '3174025306920002', fullName: 'Siti Rahmawati', email: 'siti@dexa.local', phone: '081234567802', position: 'UI/UX Designer', department: 'IT', joinDate: '2023-06-12' },
+  { nik: '3273011209880003', fullName: 'Andi Pratama', email: 'andi@dexa.local', phone: '081234567803', position: 'Finance Staff', department: 'Finance', joinDate: '2022-09-05' },
+  { nik: '3578044408950004', fullName: 'Dewi Lestari', email: 'dewi@dexa.local', phone: '081234567804', position: 'HR Officer', department: 'HRD', joinDate: '2024-01-15' },
+  { nik: '3171031711850005', fullName: 'Rudi Hartono', email: 'rudi@dexa.local', phone: null, position: 'Marketing Specialist', department: 'Marketing', joinDate: '2021-11-20', isActive: false },
 ];
 const DEMO_NOTES = ['Mengerjakan fitur baru', 'Meeting online dengan tim', 'Menyusun laporan mingguan', 'Review pekerjaan tim', null];
 
@@ -79,8 +79,8 @@ async function seedDemo(ds: DataSource) {
       const employee = await m.save(m.create(Employee, { isActive: true, ...data }));
       await m.save(m.create(User, { email: data.email, passwordHash, role: Role.EMPLOYEE, employeeId: employee.id }));
 
-      const photoPath = `/uploads/demo-${data.nik.toLowerCase()}.svg`;
-      writeFileSync(join(uploadDir, `demo-${data.nik.toLowerCase()}.svg`), placeholderPhoto(data.fullName, i));
+      const photoPath = `/uploads/demo-${data.nik}.svg`;
+      writeFileSync(join(uploadDir, `demo-${data.nik}.svg`), placeholderPhoto(data.fullName, i));
 
       const attendances: Partial<Attendance>[] = [];
       for (const day of lastWorkdays(10)) {

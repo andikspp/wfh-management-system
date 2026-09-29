@@ -4,7 +4,9 @@ import * as dotenv from 'dotenv';
 import { createConnection } from 'mysql2/promise';
 import { DataSource } from 'typeorm';
 import { Role } from '../constants';
-import { ENTITIES, User } from '../entities';
+import { mkdirSync, writeFileSync } from 'fs';
+import { join, resolve } from 'path';
+import { Attendance, Employee, ENTITIES, User } from '../entities';
 
 dotenv.config();
 
@@ -41,7 +43,83 @@ async function main() {
     await repo.save(repo.create({ email, passwordHash: await bcrypt.hash(password, 10), role: Role.ADMIN }));
     console.log(`Admin dibuat: ${email} / ${password}`);
   }
+
+  await seedDemo(ds);
   await ds.destroy();
+}
+
+const DEMO_PASSWORD = 'password123';
+const DEMO_EMPLOYEES = [
+  { nik: 'EMP001', fullName: 'Budi Santoso', email: 'budi@dexa.local', phone: '081234567801', position: 'Software Engineer', department: 'IT', joinDate: '2023-02-01' },
+  { nik: 'EMP002', fullName: 'Siti Rahmawati', email: 'siti@dexa.local', phone: '081234567802', position: 'UI/UX Designer', department: 'IT', joinDate: '2023-06-12' },
+  { nik: 'EMP003', fullName: 'Andi Pratama', email: 'andi@dexa.local', phone: '081234567803', position: 'Finance Staff', department: 'Finance', joinDate: '2022-09-05' },
+  { nik: 'EMP004', fullName: 'Dewi Lestari', email: 'dewi@dexa.local', phone: '081234567804', position: 'HR Officer', department: 'HRD', joinDate: '2024-01-15' },
+  { nik: 'EMP005', fullName: 'Rudi Hartono', email: 'rudi@dexa.local', phone: null, position: 'Marketing Specialist', department: 'Marketing', joinDate: '2021-11-20', isActive: false },
+];
+const DEMO_NOTES = ['Mengerjakan fitur baru', 'Meeting online dengan tim', 'Menyusun laporan mingguan', 'Review pekerjaan tim', null];
+
+/** Karyawan demo + riwayat absensi 10 hari kerja terakhir (hari ini dikosongkan agar bisa dicoba absen) */
+async function seedDemo(ds: DataSource) {
+  const uploadDir = resolve(process.env.UPLOAD_DIR || 'uploads');
+  mkdirSync(uploadDir, { recursive: true });
+  const passwordHash = await bcrypt.hash(DEMO_PASSWORD, 10);
+
+  for (const [i, data] of DEMO_EMPLOYEES.entries()) {
+    if (await ds.getRepository(User).findOne({ where: { email: data.email } })) {
+      console.log(`Karyawan demo ${data.email} sudah ada, skip.`);
+      continue;
+    }
+    await ds.transaction(async (m) => {
+      const employee = await m.save(m.create(Employee, { isActive: true, ...data }));
+      await m.save(m.create(User, { email: data.email, passwordHash, role: Role.EMPLOYEE, employeeId: employee.id }));
+
+      const photoPath = `/uploads/demo-${data.nik.toLowerCase()}.svg`;
+      writeFileSync(join(uploadDir, `demo-${data.nik.toLowerCase()}.svg`), placeholderPhoto(data.fullName, i));
+
+      const attendances: Partial<Attendance>[] = [];
+      for (const day of lastWorkdays(10)) {
+        if ((day.getDate() + i) % 5 === 0) continue; // sesekali tidak absen, agar data lebih realistis
+        const checkInAt = new Date(day);
+        checkInAt.setHours(7 + (i % 2), 30 + ((day.getDate() * 7 + i * 11) % 30), (i * 13) % 60);
+        attendances.push({
+          employeeId: employee.id,
+          attendanceDate: localDate(day),
+          checkInAt,
+          photoPath,
+          notes: DEMO_NOTES[(day.getDate() + i) % DEMO_NOTES.length],
+        });
+      }
+      await m.save(Attendance, attendances.map((a) => m.create(Attendance, a)));
+    });
+    console.log(`Karyawan demo dibuat: ${data.email} / ${DEMO_PASSWORD}`);
+  }
+}
+
+function lastWorkdays(count: number): Date[] {
+  const days: Date[] = [];
+  const d = new Date();
+  d.setHours(0, 0, 0, 0);
+  while (days.length < count) {
+    d.setDate(d.getDate() - 1);
+    if (d.getDay() !== 0 && d.getDay() !== 6) days.push(new Date(d));
+  }
+  return days;
+}
+
+function localDate(d: Date): string {
+  const pad = (n: number) => String(n).padStart(2, '0');
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+}
+
+function placeholderPhoto(name: string, i: number): string {
+  const colors = ['#1d5bd8', '#1b8a4b', '#b3541e', '#7a3db8', '#c93434'];
+  const initials = name.split(' ').map((w) => w[0]).join('').slice(0, 2);
+  return `<svg xmlns="http://www.w3.org/2000/svg" width="640" height="480" viewBox="0 0 640 480">
+  <rect width="640" height="480" fill="${colors[i % colors.length]}"/>
+  <circle cx="320" cy="200" r="90" fill="#ffffff" fill-opacity="0.2"/>
+  <text x="320" y="228" font-family="sans-serif" font-size="80" font-weight="700" fill="#fff" text-anchor="middle">${initials}</text>
+  <text x="320" y="360" font-family="sans-serif" font-size="28" fill="#fff" text-anchor="middle">Foto demo WFH - ${name}</text>
+</svg>`;
 }
 
 main().catch((e) => {
